@@ -119,9 +119,8 @@ void BlinkingLEDSM_Tick() {
 
 unsigned char speaker_temp = 0x00;
 
-enum SpeakerSM {speaker_start, speaker_s0, speaker_s1, speaker_increment, speaker_decrement,speaker_wait} Speaker_state;
+enum SpeakerSM {speaker_start, speaker_s0, speaker_s1} Speaker_state;
 
-unsigned char position = 0x00;
 void SpeakerSM_Tick() {
     switch(Speaker_state) {
         case speaker_start:
@@ -129,12 +128,8 @@ void SpeakerSM_Tick() {
             break;
         case speaker_s0:
             if ((~PINA & 0x04) == 0x04) Speaker_state = speaker_s1;
-            if ((~PINA & 0x01) == 0x01) Speaker_state = speaker_increment;
-            if ((~PINA & 0x02) == 0x02) Speaker_state = speaker_decrement;
             break;
-        case speaker_increment: 
-        case speaker_decrement: Speaker_state = speaker_wait; break;
-        case speaker_wait:
+        case speaker_s1:
             if ((~PINA & 0x04) != 0x00) Speaker_state = speaker_s0;
             break;
         default: break;
@@ -142,20 +137,12 @@ void SpeakerSM_Tick() {
 
     switch(Speaker_state) {
         case speaker_start:
-        case speaker_s0: set_PWM(0);   break;
-        case speaker_increment:
-                        if(position < 0x07) position++;
-                        break;
-        case speaker_decrement:
-                        if(position > 0x00) position--;
-                        break;
-        case speaker_wait:
-                        set_PWM(500);
+        case speaker_s0: speaker_temp = 0x00;   break;
+        case speaker_s1:
+                         speaker_temp = 0x01;   break;
         default: break;
     }
 }
-
-double notes[9] = {261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 0};
 
 enum CombineLEDsSM {combine_start} Combine_state;
 
@@ -166,13 +153,11 @@ void CombineLEDsSM_Tick() {
 	}
 
 	switch(Combine_state) { // actions
-		case combine_start: PORTB = three_temp | (blinking_temp << 3) ;
+		case combine_start: PORTB = three_temp | (blinking_temp << 3) | (speaker_temp << 4);
                  break;
 		default: break;
 	}
 }
-
-
 
 int main(void) {
     /* Insert DDR and PORT initializations */
@@ -181,14 +166,13 @@ int main(void) {
 	unsigned long Three_elapsedTime = 0;
 	unsigned long Blinking_elapsedTime = 0;
     unsigned long Speaker_elapsedTime = 0;
-	const unsigned long timerPeriod = 1;	
-    PWM_on();
+	const unsigned long timerPeriod = 2;	
 
 	Three_state = three_start;
 	Blinking_state = blinking_start;
 	Combine_state = combine_start;
 
-	TimerSet(1);
+	TimerSet(2);
 	TimerOn();
 
     /* Insert your solution below */
@@ -208,7 +192,6 @@ int main(void) {
         Speaker_elapsedTime = 0;
     }    
 	CombineLEDsSM_Tick();
-    SpeakerSM_Tick();
 	while (!TimerFlag);
 	TimerFlag = 0;
 	Three_elapsedTime += timerPeriod;
