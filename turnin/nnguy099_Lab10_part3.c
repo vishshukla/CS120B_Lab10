@@ -118,6 +118,7 @@ void BlinkingLEDSM_Tick() {
 }
 
 unsigned char speaker_temp = 0x00;
+unsigned char speaker_counter = 2;
 
 enum SpeakerSM {speaker_start, speaker_s0, speaker_s1} Speaker_state;
 
@@ -137,9 +138,12 @@ void SpeakerSM_Tick() {
 
     switch(Speaker_state) {
         case speaker_start:
-        case speaker_s0: speaker_temp = 0x00;   break;
+        case speaker_s0: 
+			speaker_temp = 0x00; 
+			break;
         case speaker_s1:
-                         speaker_temp = 0x01;   break;
+                        speaker_temp = !speaker_temp;   
+			break;
         default: break;
     }
 }
@@ -165,9 +169,9 @@ int main(void) {
 	DDRA = 0x00; PORTA = 0xFF;
 	unsigned long Three_elapsedTime = 0;
 	unsigned long Blinking_elapsedTime = 0;
-    unsigned long Speaker_elapsedTime = 0;
+    	unsigned long Speaker_elapsedTime = 0;
 	const unsigned long timerPeriod = 2;	
-
+	
 	Three_state = three_start;
 	Blinking_state = blinking_start;
 	Combine_state = combine_start;
@@ -187,10 +191,11 @@ int main(void) {
 		Blinking_elapsedTime = 0;
 	}
     
-    if(Speaker_elapsedTime >= 2) {
-        SpeakerSM_Tick();
-        Speaker_elapsedTime = 0;
-    }    
+    	if(Speaker_elapsedTime >= speaker_counter) {
+        	SpeakerSM_Tick();
+        	Speaker_elapsedTime = 0;
+    	}    
+	
 	CombineLEDsSM_Tick();
 	while (!TimerFlag);
 	TimerFlag = 0;
