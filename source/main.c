@@ -131,7 +131,7 @@ void SpeakerSM_Tick() {
             if ((~PINA & 0x04) == 0x04) Speaker_state = speaker_s1;
             break;
         case speaker_s1:
-            if ((~PINA & 0x04) != 0x00) Speaker_state = speaker_s0;
+            if ((~PINA & 0x04) == 0x00) Speaker_state = speaker_s0;
             break;
         default: break;
     }
@@ -146,37 +146,6 @@ void SpeakerSM_Tick() {
 			break;
         default: break;
     }
-}
-
-enum FrequencySM {frequency_start, frequency_s0, frequency_increment, frequency_decrement, frequency_wait} Frequency_state;
-
-void FrequencySM_Tick() {
-	switch(Frequency_state) { // transitions
-		case frequency_start: Frequency_state = frequency_s0; break;
-		case frequency_s0: 
-			if ((~PINA & 0x01) == 0x01) Frequency_state = frequency_increment;
-			else if ((~PINA & 0x02) == 0x02) Frequency_state = frequency_decrement;
-			break;
-		case frequency_increment:
-		case frequency_decrement:
-			Frequency_state = frequency_wait;
-			break;
-		case frequency_wait:
-			if (!~PINA) Frequency_state = frequency_s0;
-		default: break;
-	}
-	
-	switch(Frequency_state) { // actions
-		case frequency_start: break;
-		case frequency_s0: break;
-		case frequency_increment:
-			if (speaker_counter < 5) speaker_counter++;
-			break;
-		case frequency_decrement:
-			if (speaker_counter > 1) speaker_counter--;
-			break;
-		case frequency_wait: break;
-		default: break;
 }
 
 enum CombineLEDsSM {combine_start} Combine_state;
@@ -194,19 +163,18 @@ void CombineLEDsSM_Tick() {
 	}
 }
 
-int main(void) {
+int main() {
     /* Insert DDR and PORT initializations */
 	DDRB = 0xFF; PORTB = 0x00;	
 	DDRA = 0x00; PORTA = 0xFF;
 	unsigned long Three_elapsedTime = 0;
 	unsigned long Blinking_elapsedTime = 0;
-    	unsigned long Speaker_elapsedTime  0;
+    unsigned long Speaker_elapsedTime = 0;
 	const unsigned long timerPeriod = 1;	
 	
 	Three_state = three_start;
 	Blinking_state = blinking_start;
 	Speaker_state = speaker_start;
-	Frequency_state = frequency_start;
 	Combine_state = combine_start;
 
 	TimerSet(timerPeriod);
@@ -224,17 +192,17 @@ int main(void) {
 		Blinking_elapsedTime = 0;
 	}
     
-    	if(Speaker_elapsedTime >= speaker_counter) {
-        	SpeakerSM_Tick();
-        	Speaker_elapsedTime = 0;
-    	}    
+    if(Speaker_elapsedTime >= speaker_counter) {
+        SpeakerSM_Tick();
+    	Speaker_elapsedTime = 0;
+    }    
 	
 	CombineLEDsSM_Tick();
 	while (!TimerFlag);
 	TimerFlag = 0;
 	Three_elapsedTime += timerPeriod;
 	Blinking_elapsedTime += timerPeriod;	
-    	Speaker_elapsedTime += timerPeriod;
+    Speaker_elapsedTime += timerPeriod;
     }
     return 1;
 }

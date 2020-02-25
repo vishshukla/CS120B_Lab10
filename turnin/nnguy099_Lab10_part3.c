@@ -131,7 +131,7 @@ void SpeakerSM_Tick() {
             if ((~PINA & 0x04) == 0x04) Speaker_state = speaker_s1;
             break;
         case speaker_s1:
-            if ((~PINA & 0x04) != 0x00) Speaker_state = speaker_s0;
+            if ((~PINA & 0x04) == 0x00) Speaker_state = speaker_s0;
             break;
         default: break;
     }
@@ -163,20 +163,21 @@ void CombineLEDsSM_Tick() {
 	}
 }
 
-int main(void) {
+int main() {
     /* Insert DDR and PORT initializations */
 	DDRB = 0xFF; PORTB = 0x00;	
 	DDRA = 0x00; PORTA = 0xFF;
 	unsigned long Three_elapsedTime = 0;
 	unsigned long Blinking_elapsedTime = 0;
-    	unsigned long Speaker_elapsedTime = 0;
-	const unsigned long timerPeriod = 2;	
+    unsigned long Speaker_elapsedTime = 0;
+	const unsigned long timerPeriod = 1;	
 	
 	Three_state = three_start;
 	Blinking_state = blinking_start;
+	Speaker_state = speaker_start;
 	Combine_state = combine_start;
 
-	TimerSet(2);
+	TimerSet(timerPeriod);
 	TimerOn();
 
     /* Insert your solution below */
@@ -191,10 +192,10 @@ int main(void) {
 		Blinking_elapsedTime = 0;
 	}
     
-    	if(Speaker_elapsedTime >= speaker_counter) {
-        	SpeakerSM_Tick();
-        	Speaker_elapsedTime = 0;
-    	}    
+    if(Speaker_elapsedTime >= speaker_counter) {
+        SpeakerSM_Tick();
+    	Speaker_elapsedTime = 0;
+    }    
 	
 	CombineLEDsSM_Tick();
 	while (!TimerFlag);
